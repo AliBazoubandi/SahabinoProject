@@ -1,40 +1,52 @@
-package com.sahabino.mySqlPart;
+package com.sahabino.mySqlPart.api.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 @Entity
-@Table(name = "ALERT")
 public class Alert {
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY)
     @Column
-    private int ruleID;
+    private int Id;
+    @Column
+    private String ruleName;
     @Column
     private String componentName;
     @Column
     private String description;
     @Column
-    private String date;
+    private LocalDate date;
     @Column
-    private String time;
+    private LocalTime time;
 
-    public Alert() {
-    }
+    public Alert() {}
 
-    public Alert(String componentName, String description, String date, String time) {
+    public Alert(String ruleName, String componentName, String description, LocalDate date, LocalTime time) {
         super();
+        this.ruleName = ruleName;
         this.componentName = componentName;
         this.description = description;
         this.date = date;
         this.time = time;
     }
 
-    public int getRuleID() {
-        return ruleID;
+    public int getId() {
+        return Id;
     }
 
-    public void setRuleID(int ruleID) {
-        this.ruleID = ruleID;
+    public void setId(int Id) {
+        this.Id = Id;
+    }
+
+    public String getRuleName() {
+        return ruleName;
+    }
+
+    public void setRuleName(String ruleName) {
+        this.ruleName = ruleName;
     }
 
     public String getComponentName() {
@@ -53,19 +65,18 @@ public class Alert {
         this.description = description;
     }
 
-    public String getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(String date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
-    public String getTime() {
-        return time;
-    }
+    public LocalTime getTime() { return time; }
 
-    public void setTime(String time) {
+    public void setTime(LocalTime time) {
         this.time = time;
     }
+
 }
