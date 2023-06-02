@@ -14,6 +14,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 
+/*
+* this is the second part of the project that we need to get the data from kafka using a consumer.
+* then, according to the rules mentioned in the project, create an alert to send to the database.
+* in this class, we have 3 lists that we use to save component logs in them.
+* each list is belonged to one specific component and only saves the logs that are related to that component.
+* we also have 3 concurrent sets for saving created alerts related to each list.
+* it means that each list has a specific set to itself.
+* we used concurrent HashMap to define the sets because we are dealing with threads and parallelism.
+* we need an AlertRepository object in this class too. cause after creating alerts, we need to send them into the database.
+* we have 3 methods in this class for 3 rules that are mentioned in the project. and we have one method to run all of them simultaneously.
+ */
 @Service
 public class RuleEvaluator {
 
@@ -33,6 +44,12 @@ public class RuleEvaluator {
         RuleEvaluator.alertRepository = alertRepository;
     }
 
+    /*
+    * this method needs a List of components to pass them into the 3 methods that it will call in itself.
+    * the component will specify that the methods should run on which log list.
+    * in order to be able
+    * to use runAsync method to run all the 3 methods simultaneously, we used CompletableFuture<Void>.
+     */
     public static void run(List<MyLog> componentLogs) {
         CompletableFuture<Void> firstRuleFuture = CompletableFuture.runAsync(()-> firstRuleAlertBuilder(componentLogs));
         CompletableFuture<Void> secondRuleFuture = CompletableFuture.runAsync(()-> secondRuleAlertBuilder(componentLogs));
@@ -40,18 +57,19 @@ public class RuleEvaluator {
         CompletableFuture<Void> running = CompletableFuture.allOf(firstRuleFuture, secondRuleFuture, thirdRuleFuture);
         try {
             running.get();
-//            if (componentLogs.equals(firstComponentLogs)) {
-//                LOGGER.info("--------END firstComponentLogs:");
-//            } else if (componentLogs.equals(secondComponentLogs)) {
-//                LOGGER.info("--------END secondComponentLogs:");
-//            } else {
-//                LOGGER.info("--------END thirdComponentLogs:");
-//            }
         } catch (InterruptedException | ExecutionException exception) {
 
         }
     }
-
+    /*
+    * in this method, we try to create alerts about the first rule.
+    * the instruction is easy.
+    * we just need to go through the list of logs that we are given to, and for each log we need to create a new alert.
+    * but if the alert is already created, we shouldn't create it again,
+    * so we are going through our created logs set and with the help of a boolean variable, we do this.
+    * if everything is ok and the alert is not yet in our set, we create the new alert,
+    * and we will add it to our database after we create it.
+     */
     public static void firstRuleAlertBuilder(List<MyLog> componentLogs) {
 
         componentLogs.forEach(log -> {
@@ -69,58 +87,57 @@ public class RuleEvaluator {
                 Alert alert = new Alert(description, date, time);
                 createdAlertsForFirstRule.add(alert);
                 alertRepository.save(alert);
-//                LOGGER.info(alert.toString());
             }
         });
-//        LOGGER.info(String.format("size of list -> %s", createdAlertsForFirstRule.size()));
-
-//        alertRepository.saveAll(createdAlertsForFirstRule);
     }
+
+    /*
+    * in this method, we try to create alerts about the first rule.
+    * the instruction is easy.
+    * we just need to create and interval of time in this case we considered 5 minutes.
+    * we get the min time from the log list, and we get the max time too.
+    * when our interval's end is equal or less than our max time, we can go into our loop.
+    * in the loop we get every log that is in that interval.
+    * based on the logs within our interval, we create a map.
+    * the keys of this map are the distinct types that we have in our within interval logs.
+    * and the values of them are equal to the number of times that is repeated in our list.
+    * then we go through this map, and if there is a key(type) that has a value more than 2, we create an alert for it.
+    * we do the kind of exact same thing to see if the alert is already.
+    * if not, we will create a new alert and add it to our set and will add it to our database again.
+    * at the end of while we will give the start and end of the interval new value,
+    * so we can go through this process for the next interval too.
+    * we add 1 minute to start and end, so if we went through 19 to 24 in the last interval, we will go through 20 to 25 in the new interval.
+     */
     public static void secondRuleAlertBuilder(List<MyLog> componentLogs) {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss,SSS");
-//        LOGGER.info("before min and max");
         LocalTime minTime = componentLogs.stream()
                 .map(log -> LocalTime.parse(log.getTime(), format))
                 .min(LocalTime::compareTo)
                 .orElse(null);
-//        LOGGER.info(String.format("Min time -> %s", minTime));
         LocalTime maxTime = componentLogs.stream()
                 .map(log -> LocalTime.parse(log.getTime(), format))
                 .max(LocalTime::compareTo)
                 .orElse(null);
-//        LOGGER.info(String.format("Max time -> %s", maxTime));
-//        LOGGER.info("after min and max");
         if (minTime != null && maxTime != null) {
             LocalTime currentIntervalStart = minTime;
-//            LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
-            LocalTime currentIntervalEnd = minTime.plusMinutes(10);
-//            LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
+            LocalTime currentIntervalEnd = minTime.plusMinutes(5);
             Duration intervalDuration = Duration.ofMinutes(1);
-//            LOGGER.info("before while");
             Map<String, Integer> typeCounts = new ConcurrentHashMap<>();
             while (currentIntervalEnd.isBefore(maxTime) || currentIntervalEnd.equals(maxTime)) {
                 final LocalTime start = currentIntervalStart;
-//                LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
                 final LocalTime end = currentIntervalEnd;
-//                LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
-//                LOGGER.info("before finding logs in this interval");
                 List<MyLog> logsWithinInterval = componentLogs.stream()
                         .filter(log -> {
                             LocalTime logTime = LocalTime.parse(log.getTime(), format);
                             return (logTime.isAfter(start) || logTime.equals(start)) && (logTime.isBefore(end) || logTime.equals(end));
                         })
                         .toList();
-//                LOGGER.info(String.format("this is logs within interval now -> %s",logsWithinInterval.toString()));
-//                LOGGER.info("before creating a map from logs types");
                 for (MyLog log : logsWithinInterval) {
                     String type = log.getType();
-//                    LOGGER.info(String.format("the value before %s is -> %s", type, typeCounts.get(type)));
                     typeCounts.put(type, typeCounts.getOrDefault(type, 0) + 1);
-//                    LOGGER.info(String.format("the value after %s is -> %s", type, typeCounts.get(type)));
                 }
                 LOGGER.info("\n");
-//                LOGGER.info("before finding if there is more than 10 of one type");
                 for (Map.Entry<String, Integer> type : typeCounts.entrySet()) {
                     if (type.getValue() > 1) {
                         List<MyLog> lastTwoLogs = new ArrayList<>();
@@ -142,9 +159,7 @@ public class RuleEvaluator {
                         if (!isDuplicate) {
                             Alert alert = new Alert(description, date, time);
                             createdAlertsForSecondRule.add(alert);
-//                            LOGGER.info(String.format("this is createdAlertsForSecondRule size -> %s",createdAlertsForSecondRule.size()));
                             alertRepository.save(alert);
-//                            LOGGER.info("new alert added to the second set" + alert.toString());
                         }
                     }
                 }
@@ -153,29 +168,32 @@ public class RuleEvaluator {
                 currentIntervalEnd = currentIntervalEnd.plus(intervalDuration);
             }
         }
-//        createdAlertsForSecondRule.forEach(alert1 -> LOGGER.info(String.format("....... we are in rules2 -> %s", alert1.getDescription())));
-//        alertRepository.saveAll(createdAlertsForSecondRule);
     }
 
+    /*
+    * in this method, we try to create alerts about the first rule.
+    * the instruction is easy. we just need to create and interval of time in this case we considered 5 minutes.
+    * we get the min time from the log list, and we get the max time too. when our interval's end is equal or less than our max time we can go into our loop.
+    * in the loop we get every log that is in that interval.
+    * if the logs withing interval list have more than 4 elements, we create a new alert.
+    * we do the kind of exact same thing to see if the alert is already. if not, we will create a new alert and add it to our set and will add it to our database again.
+    * at the end of while we will give the start and end of the interval new value, so we can go through this process for the next interval too.
+    * we add 1 minute to start and end, so if we went through 19 to 24 in the last interval, we will go through 20 to 25 in the new interval.
+     */
     public static void thirdRuleAlertBuilder(List<MyLog> componentLogs) {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss,SSS");
-//        LOGGER.info("before min and max");
         LocalTime minTime = componentLogs.stream()
                 .map(log -> LocalTime.parse(log.getTime(), format))
                 .min(LocalTime::compareTo)
                 .orElse(null);
-//        LOGGER.info(String.format("Min time -> %s", minTime));
         LocalTime maxTime = componentLogs.stream()
                 .map(log -> LocalTime.parse(log.getTime(), format))
                 .max(LocalTime::compareTo)
                 .orElse(null);
-//        LOGGER.info(String.format("Max time -> %s", maxTime));
         if (minTime != null && maxTime != null) {
             LocalTime currentIntervalStart = minTime;
-//            LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
             LocalTime currentIntervalEnd = minTime.plusMinutes(5);
-//            LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
             Duration intervalDuration = Duration.ofMinutes(1);
 
             while (currentIntervalEnd.isBefore(maxTime) || currentIntervalEnd.equals(maxTime)) {
@@ -187,7 +205,6 @@ public class RuleEvaluator {
                             return (logTime.isAfter(start) || logTime.equals(start)) && (logTime.isBefore(end) || logTime.equals(end));
                         })
                         .toList();
-//                LOGGER.info(String.format("this is logs within interval now -> %s",logsWithinInterval.toString()));
                 int size = logsWithinInterval.size();
                 if (size > 4) {
                     String description = String.format("log ratio in the interval between %s and %s is equal to %s", currentIntervalStart, currentIntervalEnd, size);
@@ -204,7 +221,6 @@ public class RuleEvaluator {
                         Alert alert = new Alert(description, date, time);
                         createdAlertsForThirdRule.add(alert);
                         alertRepository.save(alert);
-//                        LOGGER.info("new alert added to the third set");
                     }
                 }
 
@@ -212,8 +228,5 @@ public class RuleEvaluator {
                 currentIntervalEnd = currentIntervalEnd.plus(intervalDuration);
             }
         }
-//        createdAlertsForThirdRule.forEach(alert1 -> LOGGER.info(String.format("....... we are in rules3 -> %s", alert1.getDescription())));
-//        LOGGER.info(String.format("this is createdAlertsForThirdRule size now -> %s", createdAlertsForThirdRule.size()));
-//        alertRepository.saveAll(createdAlertsForThirdRule);
     }
 }

@@ -1,5 +1,13 @@
 package com.myfileingesterpart.api.model;
 
+/*
+* this is the log class, and instance of this class will be defined in the main class.
+* when we read from a file, each line is a log, so based on the pattern that is defined in the main class,
+* we will get fields that we need for creating a new instance of this class.
+* so every field of instances of this class will be defined based on the one line of the file
+* that we read except the componentName field.
+* this field is based on the file name.
+ */
 public class MyLog {
     private String time;
     private String date;

@@ -6,6 +6,13 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/*
+* this is the alert class.
+* we will create a new object of this class in the rule evaluator class, and we will add them into our database.
+* this is a simple class, and all we should know is that we don't create the id. the annotation will handle that.
+* the description will be defined according to the type of the rule in the rule evaluator class.
+* time and date will be defined as soon as an alert is created by using LocalDate.now and LocalTime.now
+ */
 @Entity
 public class Alert {
     @Id

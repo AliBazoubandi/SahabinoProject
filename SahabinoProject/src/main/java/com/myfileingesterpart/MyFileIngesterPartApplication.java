@@ -12,7 +12,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-
+/*
+* this is our main class
+* in this class we read all the files from a directory and go through all of them.
+* if the componentName of the file is firstComponent, the data are sent to firstComponent topic(myTopic)
+* if the componentName of the file is secondComponent, the data are sent to secondComponent topic(yourTopic)
+* if the componentName of the file is thirdComponent, the data are sent to thirdComponent topic(hisTopic)
+* we read each line and the line will be separated into 6 parts based on a space,
+* and we used limit in our split method because we want everything that is after the "-" to be considered as message for that log
+ */
 @SpringBootApplication
 public class MyFileIngesterPartApplication {
 

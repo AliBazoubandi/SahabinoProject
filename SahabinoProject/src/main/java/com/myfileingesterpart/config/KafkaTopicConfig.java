@@ -5,6 +5,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
+/*
+* this is a configuration class, and we use this to create our topics for the kafka.
+* we use the topic method and this method will return a NewTopic that is in the springboot kafka library.
+* for creating a new topic, just need to call TopicBuilder and give a name for the topic to it.
+* we have 3 topics because we assign one topic to each component and assumed that we have 3 components.
+ */
 @Configuration
 public class KafkaTopicConfig {
 
@@ -25,24 +31,5 @@ public class KafkaTopicConfig {
         return TopicBuilder.name("hisTopic")
                 .build();
     }
-
-    // this is for the final test
-//    @Bean
-//    public NewTopic firstComponentTopic() {
-//        return TopicBuilder.name("firstComponentTopic")
-//                .build();
-//    }
-//
-//    @Bean
-//    public NewTopic secondComponentTopic() {
-//        return TopicBuilder.name("secondComponentTopic")
-//                .build();
-//    }
-//
-//    @Bean
-//    public NewTopic thirdComponentTopic() {
-//        return TopicBuilder.name("thirdComponentTopic")
-//                .build();
-//    }
 
 }
