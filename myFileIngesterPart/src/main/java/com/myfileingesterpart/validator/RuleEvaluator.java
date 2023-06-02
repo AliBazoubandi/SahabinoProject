@@ -36,16 +36,17 @@ public class RuleEvaluator {
     public static void run(ArrayList<MyLog> componentLogs) {
         CompletableFuture<Void> firstRuleFuture = CompletableFuture.runAsync(()-> firstRuleAlertBuilder(componentLogs));
         CompletableFuture<Void> secondRuleFuture = CompletableFuture.runAsync(()-> secondRuleAlertBuilder(componentLogs));
-        CompletableFuture<Void> running = CompletableFuture.allOf(firstRuleFuture,secondRuleFuture);
+        CompletableFuture<Void> thirdRuleFuture = CompletableFuture.runAsync(()-> thirdRuleAlertBuilder(componentLogs));
+        CompletableFuture<Void> running = CompletableFuture.allOf(firstRuleFuture, secondRuleFuture, thirdRuleFuture);
         try {
             running.get();
-            if (componentLogs.equals(firstComponentLogs)) {
-                LOGGER.info("--------END firstComponentLogs:");
-            } else if (componentLogs.equals(secondComponentLogs)) {
-                LOGGER.info("--------END secondComponentLogs:");
-            } else {
-                LOGGER.info("--------END thirdComponentLogs:");
-            }
+//            if (componentLogs.equals(firstComponentLogs)) {
+//                LOGGER.info("--------END firstComponentLogs:");
+//            } else if (componentLogs.equals(secondComponentLogs)) {
+//                LOGGER.info("--------END secondComponentLogs:");
+//            } else {
+//                LOGGER.info("--------END thirdComponentLogs:");
+//            }
         } catch (InterruptedException | ExecutionException exception) {
 
         }
@@ -67,55 +68,55 @@ public class RuleEvaluator {
             if (!isDuplicate) {
                 Alert alert = new Alert(description, date, time);
                 createdAlertsForFirstRule.add(alert);
-                LOGGER.info(alert.toString());
+//                LOGGER.info(alert.toString());
             }
         });
-        LOGGER.info(String.format("size of list -> %s", createdAlertsForFirstRule.size()));
+//        LOGGER.info(String.format("size of list -> %s", createdAlertsForFirstRule.size()));
 
 //        alertRepository.saveAll(createdAlertsForFirstRule);
     }
     public static void secondRuleAlertBuilder(ArrayList<MyLog> componentLogs) {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss,SSS");
-        LOGGER.info("before min and max");
+//        LOGGER.info("before min and max");
         LocalTime minTime = componentLogs.stream()
                 .map(log -> LocalTime.parse(log.getTime(), format))
                 .min(LocalTime::compareTo)
                 .orElse(null);
-        LOGGER.info(String.format("Min time -> %s", minTime));
+//        LOGGER.info(String.format("Min time -> %s", minTime));
         LocalTime maxTime = componentLogs.stream()
                 .map(log -> LocalTime.parse(log.getTime(), format))
                 .max(LocalTime::compareTo)
                 .orElse(null);
-        LOGGER.info(String.format("Max time -> %s", maxTime));
-        LOGGER.info("after min and max");
+//        LOGGER.info(String.format("Max time -> %s", maxTime));
+//        LOGGER.info("after min and max");
         if (minTime != null && maxTime != null) {
             LocalTime currentIntervalStart = minTime;
-            LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
+//            LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
             LocalTime currentIntervalEnd = minTime.plusMinutes(5);
-            LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
+//            LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
             Duration intervalDuration = Duration.ofMinutes(1);
-            LOGGER.info("before while");
+//            LOGGER.info("before while");
             Map<String, Integer> typeCounts = new HashMap<>();
             while (currentIntervalEnd.isBefore(maxTime) || currentIntervalEnd.equals(maxTime)) {
                 final LocalTime start = currentIntervalStart;
-                LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
+//                LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
                 final LocalTime end = currentIntervalEnd;
-                LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
-                LOGGER.info("before finding logs in this interval");
+//                LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
+//                LOGGER.info("before finding logs in this interval");
                 List<MyLog> logsWithinInterval = componentLogs.stream()
                         .filter(log -> {
                             LocalTime logTime = LocalTime.parse(log.getTime(), format);
                             return (logTime.isAfter(start) || logTime.equals(start)) && (logTime.isBefore(end) || logTime.equals(end));
                         })
                         .toList();
-                LOGGER.info(String.format("this is logs within interval now -> %s",logsWithinInterval.toString()));
-                LOGGER.info("before creating a map from logs types");
+//                LOGGER.info(String.format("this is logs within interval now -> %s",logsWithinInterval.toString()));
+//                LOGGER.info("before creating a map from logs types");
                 for (MyLog log : logsWithinInterval) {
                     String type = log.getType();
                     typeCounts.put(type, typeCounts.getOrDefault(type, 0) + 1);
                 }
-                LOGGER.info("before finding if there is more than 10 of one type");
+//                LOGGER.info("before finding if there is more than 10 of one type");
                 for (Map.Entry<String, Integer> type : typeCounts.entrySet()) {
                     if (type.getValue() > 10) {
                         List<MyLog> lastTwoLogs = new ArrayList<>();
@@ -137,7 +138,7 @@ public class RuleEvaluator {
                         if (!isDuplicate) {
                             Alert alert = new Alert(description, date, time);
                             createdAlertsForSecondRule.add(alert);
-                            LOGGER.info("new alert added to the second set");
+//                            LOGGER.info("new alert added to the second set");
                         }
                     }
                 }
@@ -146,59 +147,66 @@ public class RuleEvaluator {
                 currentIntervalEnd = currentIntervalEnd.plus(intervalDuration);
             }
         }
-        createdAlertsForSecondRule.forEach(alert1 -> LOGGER.info(String.format("....... we are in rules2 -> %s", alert1.getDescription())));
+//        createdAlertsForSecondRule.forEach(alert1 -> LOGGER.info(String.format("....... we are in rules2 -> %s", alert1.getDescription())));
 //        alertRepository.saveAll(createdAlertsForSecondRule);
     }
 
-//    public static void thirdRuleAlertBuilder(ArrayList<MyLog> componentLogs) {
-//
-//        LocalDateTime minTime = componentLogs.stream()
-//                .map(log -> LocalDateTime.parse(log.getTime()))
-//                .min(LocalDateTime::compareTo)
-//                .orElse(null);
-//        LocalDateTime maxTime = componentLogs.stream()
-//                .map(log -> LocalDateTime.parse(log.getTime()))
-//                .max(LocalDateTime::compareTo)
-//                .orElse(null);
-//        if (minTime != null && maxTime != null) {
-//            LocalDateTime currentIntervalStart = minTime;
-//            LocalDateTime currentIntervalEnd = minTime.plusMinutes(5);
-//            Duration intervalDuration = Duration.ofMinutes(5);
-//
-//            List<String> typesWithinInterval = new ArrayList<>();
-//            while (currentIntervalEnd.isBefore(maxTime) || currentIntervalEnd.isEqual(maxTime)) {
-//                final LocalDateTime start = currentIntervalStart;
-//                final LocalDateTime end = currentIntervalEnd;
-//                List<MyLog> logsWithinInterval = componentLogs.stream()
-//                        .filter(log -> {
-//                            LocalDateTime logTime = LocalDateTime.parse(log.getTime());
-//                            return logTime.isAfter(start) && logTime.isBefore(end);
-//                        })
-//                        .toList();
-//                int size = logsWithinInterval.size();
-//                if (size > 10) {
-//                    typesWithinInterval = logsWithinInterval.stream()
-//                            .map(MyLog::getType)
-//                            .distinct()
-//                            .collect(Collectors.toList());
-//                    String description = size
-//                            + typesWithinInterval.toString()
-//                            + logsWithinInterval.get(size - 2).getMessage()
-//                            + logsWithinInterval.get(size - 1).getMessage();
-//                    LocalDate date = LocalDate.now();
-//                    LocalTime time = LocalTime.now();
-//                    Alert alert = new Alert(description, date, time);
-//                    createdAlertsForThirdRule.add(alert);
-//                }
-//
-//                currentIntervalStart = currentIntervalStart.plus(intervalDuration);
-//                currentIntervalEnd = currentIntervalEnd.plus(intervalDuration);
-//            }
-//        }
-//        createdAlertsForThirdRule.forEach(alert1 -> {
-//            LOGGER.info(String.format("....... we are in rules3 -> %s", alert1.getDescription()));
-//        });
-//
-////        alertRepository.saveAll(createdAlertsForThirdRule);
-//    }
+    public static void thirdRuleAlertBuilder(ArrayList<MyLog> componentLogs) {
+
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss,SSS");
+//        LOGGER.info("before min and max");
+        LocalTime minTime = componentLogs.stream()
+                .map(log -> LocalTime.parse(log.getTime(), format))
+                .min(LocalTime::compareTo)
+                .orElse(null);
+//        LOGGER.info(String.format("Min time -> %s", minTime));
+        LocalTime maxTime = componentLogs.stream()
+                .map(log -> LocalTime.parse(log.getTime(), format))
+                .max(LocalTime::compareTo)
+                .orElse(null);
+//        LOGGER.info(String.format("Max time -> %s", maxTime));
+        if (minTime != null && maxTime != null) {
+            LocalTime currentIntervalStart = minTime;
+//            LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
+            LocalTime currentIntervalEnd = minTime.plusMinutes(5);
+//            LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
+            Duration intervalDuration = Duration.ofMinutes(1);
+
+            while (currentIntervalEnd.isBefore(maxTime) || currentIntervalEnd.equals(maxTime)) {
+                final LocalTime start = currentIntervalStart;
+                final LocalTime end = currentIntervalEnd;
+                List<MyLog> logsWithinInterval = componentLogs.stream()
+                        .filter(log -> {
+                            LocalTime logTime = LocalTime.parse(log.getTime(), format);
+                            return (logTime.isAfter(start) || logTime.equals(start)) && (logTime.isBefore(end) || logTime.equals(end));
+                        })
+                        .toList();
+//                LOGGER.info(String.format("this is logs within interval now -> %s",logsWithinInterval.toString()));
+                int size = logsWithinInterval.size();
+                if (size > 4) {
+                    String description = String.format("log ratio in the interval between %s and %s is equal to %s", currentIntervalStart, currentIntervalEnd, size);
+                    LocalDate date = LocalDate.now();
+                    LocalTime time = LocalTime.now();
+                    boolean isDuplicate = false;
+                    for (Alert alert : createdAlertsForThirdRule) {
+                        if (alert.getDescription().equals(description)) {
+                            isDuplicate = true;
+                            break;
+                        }
+                    }
+                    if (!isDuplicate) {
+                        Alert alert = new Alert(description, date, time);
+                        createdAlertsForThirdRule.add(alert);
+//                        LOGGER.info("new alert added to the third set");
+                    }
+                }
+
+                currentIntervalStart = currentIntervalStart.plus(intervalDuration);
+                currentIntervalEnd = currentIntervalEnd.plus(intervalDuration);
+            }
+        }
+//        createdAlertsForThirdRule.forEach(alert1 -> LOGGER.info(String.format("....... we are in rules3 -> %s", alert1.getDescription())));
+//        LOGGER.info(String.format("this is createdAlertsForThirdRule size now -> %s", createdAlertsForThirdRule.size()));
+//        alertRepository.saveAll(createdAlertsForThirdRule);
+    }
 }
