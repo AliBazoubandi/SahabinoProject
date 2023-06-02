@@ -1,10 +1,11 @@
-package com.myfileingesterpart.model;
+package com.myfileingesterpart.api.model;
 
 public class MyLog {
     private String time;
     private String date;
+    private String componentName;
     private String threadName;
-    private String info;
+    private String type;
     private String className;
     private String message;
 
@@ -24,6 +25,14 @@ public class MyLog {
         this.date = date;
     }
 
+    public String getComponentName() {
+        return componentName;
+    }
+
+    public void setComponentName(String componentName) {
+        this.componentName = componentName;
+    }
+
     public String getThreadName() {
         return threadName;
     }
@@ -32,12 +41,12 @@ public class MyLog {
         this.threadName = threadName;
     }
 
-    public String getInfo() {
-        return info;
+    public String getType() {
+        return type;
     }
 
-    public void setInfo(String info) {
-        this.info = info;
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getClassName() {
@@ -62,7 +71,7 @@ public class MyLog {
                 "time=" + time +
                 ", date=" + date +
                 ", threadName='" + threadName + '\'' +
-                ", info='" + info + '\'' +
+                ", type='" + type + '\'' +
                 ", className='" + className + '\'' +
                 ", message='" + message + '\'' +
                 '}';

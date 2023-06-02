@@ -1,0 +1,12 @@
+2023-06-12 11:19:42,114 [ThreadName] FATAL com.example.firstclass – second component this is a FATAL test for the first class
+2023-06-12 11:20:42,114 [ThreadName] INFO com.example.firstclass – second component this is a INFO test for the first class
+2023-06-12 11:21:42,114 [ThreadName] ERROR com.example.firstclass – second component this is a ERROR test for the first class
+2023-06-12 11:22:42,114 [ThreadName] WARNING com.example.firstclass – second component this is a WARNING test for the first class
+2023-06-12 11:23:42,114 [ThreadName] DEBUG com.example.firstclass – second component this is a DEBUG test for the first class
+2023-06-12 11:24:42,114 [ThreadName] TRACE com.example.firstclass – second component this is a TRACE test for the first class
+2023-06-12 11:25:42,114 [ThreadName] FATAL com.example.secondclass – second component this is a FATAL test for the second class
+2023-06-12 11:26:42,114 [ThreadName] INFO com.example.secondclass – second component this is a INFO test for the second class
+2023-06-12 11:27:42,114 [ThreadName] ERROR com.example.secondclass – second component this is a ERROR test for the second class
+2023-06-12 11:28:42,114 [ThreadName] WARNING com.example.secondclass – second component this is a WARNING test for the second class
+2023-06-12 11:29:42,114 [ThreadName] DEBUG com.example.secondclass – second component this is a DEBUG test for the second class
+2023-06-12 11:30:42,114 [ThreadName] TRACE com.example.secondclass – second component this is a TRACE test for the second class

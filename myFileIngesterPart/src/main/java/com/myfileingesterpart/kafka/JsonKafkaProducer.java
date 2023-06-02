@@ -1,6 +1,6 @@
 package com.myfileingesterpart.kafka;
 
-import com.myfileingesterpart.model.MyLog;
+import com.myfileingesterpart.api.model.MyLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -19,13 +19,13 @@ public class JsonKafkaProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendMessage(MyLog log) {
+    public void sendMessage(MyLog log, String topic) {
 
         LOGGER.info(String.format("Message sent -> %s", log.toString()));
 
         Message<MyLog> message = MessageBuilder
                 .withPayload(log)
-                .setHeader(KafkaHeaders.TOPIC, "myTopic")
+                .setHeader(KafkaHeaders.TOPIC, topic)
                 .build();
         kafkaTemplate.send(message);
     }
