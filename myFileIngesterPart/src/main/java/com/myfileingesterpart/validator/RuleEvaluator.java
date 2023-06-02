@@ -26,11 +26,11 @@ public class RuleEvaluator {
     public static Set<Alert> createdAlertsForSecondRule = ConcurrentHashMap.newKeySet();
     public static Set<Alert> createdAlertsForThirdRule = ConcurrentHashMap.newKeySet();
 
-    private AlertRepository alertRepository;
+    private static AlertRepository alertRepository;
 
     @Autowired
     public RuleEvaluator(AlertRepository alertRepository) {
-        this.alertRepository = alertRepository;
+        RuleEvaluator.alertRepository = alertRepository;
     }
 
     public static void run(ArrayList<MyLog> componentLogs) {
@@ -68,6 +68,7 @@ public class RuleEvaluator {
             if (!isDuplicate) {
                 Alert alert = new Alert(description, date, time);
                 createdAlertsForFirstRule.add(alert);
+                alertRepository.save(alert);
 //                LOGGER.info(alert.toString());
             }
         });
@@ -93,11 +94,11 @@ public class RuleEvaluator {
         if (minTime != null && maxTime != null) {
             LocalTime currentIntervalStart = minTime;
 //            LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
-            LocalTime currentIntervalEnd = minTime.plusMinutes(5);
+            LocalTime currentIntervalEnd = minTime.plusMinutes(10);
 //            LOGGER.info(String.format("currentIntervalEnd -> %s", currentIntervalEnd));
             Duration intervalDuration = Duration.ofMinutes(1);
 //            LOGGER.info("before while");
-            Map<String, Integer> typeCounts = new HashMap<>();
+            Map<String, Integer> typeCounts = new ConcurrentHashMap<>();
             while (currentIntervalEnd.isBefore(maxTime) || currentIntervalEnd.equals(maxTime)) {
                 final LocalTime start = currentIntervalStart;
 //                LOGGER.info(String.format("currentIntervalStart -> %s", currentIntervalStart));
@@ -114,18 +115,21 @@ public class RuleEvaluator {
 //                LOGGER.info("before creating a map from logs types");
                 for (MyLog log : logsWithinInterval) {
                     String type = log.getType();
+//                    LOGGER.info(String.format("the value before %s is -> %s", type, typeCounts.get(type)));
                     typeCounts.put(type, typeCounts.getOrDefault(type, 0) + 1);
+//                    LOGGER.info(String.format("the value after %s is -> %s", type, typeCounts.get(type)));
                 }
+                LOGGER.info("\n");
 //                LOGGER.info("before finding if there is more than 10 of one type");
                 for (Map.Entry<String, Integer> type : typeCounts.entrySet()) {
-                    if (type.getValue() > 10) {
+                    if (type.getValue() > 1) {
                         List<MyLog> lastTwoLogs = new ArrayList<>();
                         for (MyLog log : logsWithinInterval) {
                             if (log.getType().equals(type.getKey())) {
                                 lastTwoLogs.add(log);
                             }
                         }
-                        String description = type.getValue() + type.getKey() + lastTwoLogs.get(lastTwoLogs.size() - 1) + lastTwoLogs.get(lastTwoLogs.size() - 2);
+                        String description = type.getValue() + " " + type.getKey() + " "  + lastTwoLogs.get(lastTwoLogs.size() - 1).getMessage() + " "  + lastTwoLogs.get(lastTwoLogs.size() - 2).getMessage();
                         LocalDate date = LocalDate.now();
                         LocalTime time = LocalTime.now();
                         boolean isDuplicate = false;
@@ -138,11 +142,13 @@ public class RuleEvaluator {
                         if (!isDuplicate) {
                             Alert alert = new Alert(description, date, time);
                             createdAlertsForSecondRule.add(alert);
-//                            LOGGER.info("new alert added to the second set");
+//                            LOGGER.info(String.format("this is createdAlertsForSecondRule size -> %s",createdAlertsForSecondRule.size()));
+                            alertRepository.save(alert);
+//                            LOGGER.info("new alert added to the second set" + alert.toString());
                         }
                     }
                 }
-
+                typeCounts.clear();
                 currentIntervalStart = currentIntervalStart.plus(intervalDuration);
                 currentIntervalEnd = currentIntervalEnd.plus(intervalDuration);
             }
@@ -197,6 +203,7 @@ public class RuleEvaluator {
                     if (!isDuplicate) {
                         Alert alert = new Alert(description, date, time);
                         createdAlertsForThirdRule.add(alert);
+                        alertRepository.save(alert);
 //                        LOGGER.info("new alert added to the third set");
                     }
                 }
