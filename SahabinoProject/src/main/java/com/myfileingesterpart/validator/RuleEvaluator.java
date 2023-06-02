@@ -33,7 +33,7 @@ public class RuleEvaluator {
         RuleEvaluator.alertRepository = alertRepository;
     }
 
-    public static void run(ArrayList<MyLog> componentLogs) {
+    public static void run(List<MyLog> componentLogs) {
         CompletableFuture<Void> firstRuleFuture = CompletableFuture.runAsync(()-> firstRuleAlertBuilder(componentLogs));
         CompletableFuture<Void> secondRuleFuture = CompletableFuture.runAsync(()-> secondRuleAlertBuilder(componentLogs));
         CompletableFuture<Void> thirdRuleFuture = CompletableFuture.runAsync(()-> thirdRuleAlertBuilder(componentLogs));
@@ -52,7 +52,7 @@ public class RuleEvaluator {
         }
     }
 
-    public static void firstRuleAlertBuilder(ArrayList<MyLog> componentLogs) {
+    public static void firstRuleAlertBuilder(List<MyLog> componentLogs) {
 
         componentLogs.forEach(log -> {
             String description = log.getMessage();
@@ -76,7 +76,7 @@ public class RuleEvaluator {
 
 //        alertRepository.saveAll(createdAlertsForFirstRule);
     }
-    public static void secondRuleAlertBuilder(ArrayList<MyLog> componentLogs) {
+    public static void secondRuleAlertBuilder(List<MyLog> componentLogs) {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss,SSS");
 //        LOGGER.info("before min and max");
@@ -157,7 +157,7 @@ public class RuleEvaluator {
 //        alertRepository.saveAll(createdAlertsForSecondRule);
     }
 
-    public static void thirdRuleAlertBuilder(ArrayList<MyLog> componentLogs) {
+    public static void thirdRuleAlertBuilder(List<MyLog> componentLogs) {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss,SSS");
 //        LOGGER.info("before min and max");

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -29,14 +30,13 @@ public class AlertController {
                 .collect(Collectors.toList());
     }
 
-//    @GetMapping("{ruleComponentName}")
-//    public List<Alert> getAlertsBasedOnRuleOrComponent(@PathVariable("ruleComponentName") String ruleComponentName) {
-//        return alertRepository.findAll()
-//                .stream()
-//                .filter(a -> a.getRuleName().equals(ruleComponentName)
-//                        || a.getComponentName().equals(ruleComponentName))
-//                .collect(Collectors.toList());
-//    }
+    @GetMapping("{Id}")
+    public Alert getAlert(@PathVariable("Id") Integer id) {
+        Alert alert = null;
+        Optional<Alert> alert1 = alertRepository.findById(id);
+        alert = alert1.orElse(null);
+        return alert;
+    }
     @DeleteMapping("{Id}")
     public void deleteAlert(@PathVariable("Id") Integer id) {
         alertRepository.deleteById(id);
